@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rates of Reaction: Curve Explorer</title>
+<style>
+  :root{
+    --navy:#16324A;
+    --navy-deep:#0D2136;
+    --teal:#2E8F8A;
+    --teal-light:#7FC4BE;
+    --gold:#D9A441;
+    --paper:#F6F3EC;
+    --ink:#1C2B33;
+    --line:#D8D2C2;
+    --grey-curve:#B9B2A0;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:Calibri, 'Segoe UI', Tahoma, sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+  }
+  header{
+    background:var(--navy);
+    padding:22px 28px 18px;
+    border-bottom:5px solid var(--gold);
+  }
+  header h1{
+    color:#fff;
+    margin:0 0 4px;
+    font-size:1.5rem;
+    letter-spacing:.3px;
+  }
+  header p{
+    color:var(--teal-light);
+    margin:0;
+    font-size:.92rem;
+  }
+  .sim-note{
+    background:var(--navy-deep);
+    color:#cfd9de;
+    font-size:.78rem;
+    padding:8px 28px;
+    border-bottom:1px solid rgba(255,255,255,0.08);
+  }
+  nav.tabs{
+    display:flex;
+    background:var(--navy-deep);
+  }
+  nav.tabs button{
+    flex:1;
+    padding:13px 10px;
+    background:none;
+    border:none;
+    color:#cfd9de;
+    font-family:inherit;
+    font-size:.98rem;
+    cursor:pointer;
+    border-bottom:4px solid transparent;
+    transition:.15s;
+  }
+  nav.tabs button.active{
+    color:#fff;
+    border-bottom:4px solid var(--gold);
+    background:rgba(255,255,255,0.05);
+  }
+  nav.tabs button:hover{ color:#fff; }
+
+  main{ max-width:1080px; margin:0 auto; padding:22px 24px 40px; }
+  .panel{ display:none; }
+  .panel.active{ display:block; }
+
+  .layout{ display:flex; gap:24px; flex-wrap:wrap; }
+  .controls{
+    flex:1 1 280px;
+    background:#fff;
+    border:1px solid var(--line);
+    border-left:6px solid var(--teal);
+    border-radius:6px;
+    padding:18px 20px;
+  }
+  .controls h2{
+    font-size:1.05rem;
+    margin:0 0 14px;
+    color:var(--navy);
+  }
+  .control-row{ margin-bottom:16px; }
+  .control-row label{
+    display:flex;
+    justify-content:space-between;
+    font-size:.88rem;
+    font-weight:600;
+    margin-bottom:4px;
+    color:var(--navy);
+  }
+  .control-row label span.val{ color:var(--teal); font-weight:700; }
+  input[type=range]{ width:100%; accent-color:var(--teal); }
+  .seg{
+    display:flex; gap:6px; margin-top:4px;
+  }
+  .seg button{
+    flex:1;
+    padding:8px 4px;
+    font-size:.8rem;
+    border:1px solid var(--line);
+    background:var(--paper);
+    border-radius:4px;
+    cursor:pointer;
+    color:var(--navy);
+  }
+  .seg button.active{
+    background:var(--teal);
+    color:#fff;
+    border-color:var(--teal);
+    font-weight:700;
+  }
+  .actions{ display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; }
+  .actions button{
+    padding:9px 14px;
+    border:none;
+    border-radius:4px;
+    font-family:inherit;
+    font-size:.85rem;
+    cursor:pointer;
+    font-weight:700;
+  }
+  .btn-run{ background:var(--gold); color:var(--navy-deep); }
+  .btn-run:hover{ filter:brightness(1.05); }
+  .btn-clear{ background:none; border:1px solid var(--line); color:var(--navy); }
+  .checkbox-row{
+    display:flex; align-items:center; gap:7px; margin-top:12px; font-size:.85rem;
+  }
+
+  .visual-stage{
+    flex:1 1 420px;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+  .stage-card{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:14px 16px;
+  }
+  .stage-card h3{
+    margin:0 0 8px;
+    font-size:.85rem;
+    text-transform:uppercase;
+    letter-spacing:.6px;
+    color:var(--teal);
+  }
+  canvas{ width:100%; height:auto; display:block; }
+
+  .apparatus{ display:flex; justify-content:center; padding:6px 0 2px; }
+  .readout{
+    text-align:center; font-size:.85rem; color:var(--navy); margin-top:6px;
+  }
+  .readout b{ color:var(--teal); font-size:1.05rem; }
+  .readout .sub{ display:block; font-size:.78rem; color:#5b6a72; margin-top:3px; }
+
+  .note{
+    font-size:.8rem; color:#5b6a72; background:#fff; border:1px dashed var(--line);
+    border-radius:6px; padding:10px 14px; margin-top:22px;
+  }
+  footer{
+    text-align:center; padding:16px; font-size:.75rem; color:#8a8375;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Rates of Reaction: Curve Explorer</h1>
+  <p>Change one variable at a time and watch how the rate curve changes shape.</p>
+</header>
+<div class="sim-note">This is a simulation of <strong>relative</strong> changes only — curve shapes, speeds and volumes are illustrative of the trends, not measured experimental data.</div>
+
+<nav class="tabs">
+  <button class="active" data-tab="constant">Constant Mass of Marble</button>
+  <button data-tab="variable">Variable Mass of Marble</button>
+</nav>
+
+<main>
+
+  <!-- ================= TAB 1: CONSTANT MASS ================= -->
+  <section class="panel active" id="panel-constant">
+    <div class="layout">
+      <div class="controls">
+        <h2>Variables</h2>
+
+        <div class="control-row">
+          <label>HCl concentration <span class="val" id="mc-conc-val">1.0 mol/dm³</span></label>
+          <input type="range" id="mc-conc" min="0.4" max="2.0" step="0.1" value="1.0">
+        </div>
+
+        <div class="control-row">
+          <label>Temperature <span class="val" id="mc-temp-val">25 °C</span></label>
+          <input type="range" id="mc-temp" min="10" max="60" step="1" value="25">
+        </div>
+
+        <div class="control-row">
+          <label>Surface area of marble</label>
+          <div class="seg" id="mc-surface">
+            <button data-val="large">Large lumps</button>
+            <button data-val="small" class="active">Small chips</button>
+            <button data-val="powder">Powder</button>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn-run" id="mc-run">▶ Run experiment</button>
+          <button class="btn-clear" id="mc-clear">Clear graph</button>
+        </div>
+        <div class="checkbox-row">
+          <input type="checkbox" id="mc-keep">
+          <label for="mc-keep">Keep previous curve on graph for comparison</label>
+        </div>
+      </div>
+
+      <div class="visual-stage">
+        <div class="stage-card">
+          <h3>Gas syringe reading vs time</h3>
+          <canvas id="mc-graph" width="600" height="320"></canvas>
+        </div>
+        <div class="stage-card">
+          <h3>Apparatus</h3>
+          <div class="apparatus">
+            <svg width="100%" viewBox="0 0 340 150" style="max-width:400px;">
+              <rect x="15" y="35" width="110" height="100" rx="4" fill="none" stroke="#16324A" stroke-width="3"/>
+              <rect x="17" y="85" width="106" height="48" fill="#7FC4BE" opacity="0.6"/>
+              <g id="mc-lumps"></g>
+              <g id="mc-bubbles"></g>
+
+              <rect x="90" y="25" width="30" height="12" rx="2" fill="#8a8375"/>
+              <path d="M105 37 L105 32 L169 32" fill="none" stroke="#16324A" stroke-width="3"/>
+
+              <rect x="175" y="20" width="130" height="24" rx="3" fill="none" stroke="#16324A" stroke-width="2.5"/>
+              <rect x="169" y="26" width="8" height="12" fill="#16324A"/>
+
+              <rect id="mc-syringe-fill" x="178" y="22" width="0" height="20" fill="#D9A441" opacity="0.75"/>
+              <rect id="mc-plunger" x="176" y="18" width="4" height="28" fill="#16324A"/>
+
+              <line x1="178" y1="44" x2="178" y2="50" stroke="#16324A" stroke-width="1.5"/>
+              <line x1="239" y1="44" x2="239" y2="50" stroke="#16324A" stroke-width="1.5"/>
+              <line x1="300" y1="44" x2="300" y2="50" stroke="#16324A" stroke-width="1.5"/>
+              <text x="178" y="61" font-size="10" fill="#16324A" text-anchor="middle">0</text>
+              <text x="239" y="61" font-size="10" fill="#16324A" text-anchor="middle">0.5</text>
+              <text x="300" y="61" font-size="10" fill="#16324A" text-anchor="middle">Full</text>
+              <text x="240" y="75" font-size="10" fill="#5b6a72" text-anchor="middle">gas syringe</text>
+            </svg>
+          </div>
+          <div class="readout">Volume of CO₂ collected: <b id="mc-vol-readout">0</b> cm³</div>
+        </div>
+      </div>
+    </div>
+    <div class="note">The marble mass is fixed at 1.0 g and the acid is assumed to always be in excess, so <strong>every run releases the same total volume of gas</strong> — concentration, temperature and surface area only change how quickly that volume is reached. The time axis rescales automatically so each curve is shown right through to completion. This model doesn't include a catalyst, since there isn't a standard one for this particular reaction at IGCSE level.</div>
+  </section>
+
+  <!-- ================= TAB 2: VARIABLE MASS ================= -->
+  <section class="panel" id="panel-variable">
+    <div class="layout">
+      <div class="controls">
+        <h2>Variables</h2>
+
+        <div class="control-row">
+          <label>Mass of marble</label>
+          <div class="seg" id="vm-mass">
+            <button data-val="1">1.0 g</button>
+            <button data-val="2" class="active">2.0 g</button>
+            <button data-val="4">4.0 g</button>
+          </div>
+        </div>
+
+        <div class="control-row">
+          <label>HCl concentration <span class="val" id="vm-conc-val">1.0 mol/dm³</span></label>
+          <input type="range" id="vm-conc" min="0.4" max="2.0" step="0.1" value="1.0">
+        </div>
+
+        <div class="control-row">
+          <label>Temperature <span class="val" id="vm-temp-val">25 °C</span></label>
+          <input type="range" id="vm-temp" min="10" max="60" step="1" value="25">
+        </div>
+
+        <div class="control-row">
+          <label>Surface area of marble</label>
+          <div class="seg" id="vm-surface">
+            <button data-val="large">Large lumps</button>
+            <button data-val="small" class="active">Small chips</button>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn-run" id="vm-run">▶ Run experiment</button>
+          <button class="btn-clear" id="vm-clear">Clear graph</button>
+        </div>
+        <div class="checkbox-row">
+          <input type="checkbox" id="vm-keep">
+          <label for="vm-keep">Keep previous curve on graph for comparison</label>
+        </div>
+      </div>
+
+      <div class="visual-stage">
+        <div class="stage-card">
+          <h3>Gas syringe reading vs time</h3>
+          <canvas id="vm-graph" width="600" height="320"></canvas>
+        </div>
+        <div class="stage-card">
+          <h3>Apparatus</h3>
+          <div class="apparatus">
+            <svg width="100%" viewBox="0 0 340 150" style="max-width:400px;">
+              <rect x="15" y="35" width="110" height="100" rx="4" fill="none" stroke="#16324A" stroke-width="3"/>
+              <rect x="17" y="85" width="106" height="48" fill="#7FC4BE" opacity="0.6"/>
+              <g id="vm-lumps"></g>
+              <g id="vm-bubbles"></g>
+
+              <rect x="90" y="25" width="30" height="12" rx="2" fill="#8a8375"/>
+              <path d="M105 37 L105 32 L169 32" fill="none" stroke="#16324A" stroke-width="3"/>
+
+              <rect x="175" y="20" width="130" height="24" rx="3" fill="none" stroke="#16324A" stroke-width="2.5"/>
+              <rect x="169" y="26" width="8" height="12" fill="#16324A"/>
+
+              <rect id="vm-syringe-fill" x="178" y="22" width="0" height="20" fill="#D9A441" opacity="0.75"/>
+              <rect id="vm-plunger" x="176" y="18" width="4" height="28" fill="#16324A"/>
+
+              <line x1="178" y1="44" x2="178" y2="50" stroke="#16324A" stroke-width="1.5"/>
+              <line x1="239" y1="44" x2="239" y2="50" stroke="#16324A" stroke-width="1.5"/>
+              <line x1="300" y1="44" x2="300" y2="50" stroke="#16324A" stroke-width="1.5"/>
+              <text x="178" y="61" font-size="10" fill="#16324A" text-anchor="middle">0</text>
+              <text x="239" y="61" font-size="10" fill="#16324A" text-anchor="middle">0.5</text>
+              <text x="300" y="61" font-size="10" fill="#16324A" text-anchor="middle">Full</text>
+              <text x="240" y="75" font-size="10" fill="#5b6a72" text-anchor="middle">gas syringe</text>
+            </svg>
+          </div>
+          <div class="readout">Volume of CO₂ collected: <b id="vm-vol-readout">0</b> cm³
+            <span class="sub" id="vm-limiting-readout">Limiting reagent: —</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="note">The acid volume is fixed but limited, so whichever runs out first — acid or marble — caps the total gas produced. At 1.0 g, marble always runs out first regardless of concentration (same conclusion as the Constant Mass tab). Try each mass in turn and watch the "limiting reagent" readout switch as you also drag the concentration slider — that's the crossover point between the two regimes. The time axis rescales automatically so every curve is shown right through to completion.</div>
+  </section>
+
+</main>
+
+<footer>Stella Gracia School · IGCSE Chemistry · Rates of Reaction</footer>
+
+<script>
+const SVGNS = 'http://www.w3.org/2000/svg';
+const SYRINGE_CAPACITY = 130;
+const BARREL_START = 178, BARREL_LEN = 122;
+
+/* ---------- tab switching ---------- */
+document.querySelectorAll('nav.tabs button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-'+btn.dataset.tab).classList.add('active');
+  });
+});
+
+/* ---------- shared graph drawing helper ---------- */
+function drawAxes(ctx,w,h,pad,xLabel,yLabel,xMax,yMax){
+  ctx.clearRect(0,0,w,h);
+  ctx.strokeStyle = '#D8D2C2';
+  ctx.lineWidth = 1;
+  ctx.fillStyle = '#1C2B33';
+  ctx.font = '22px Calibri, sans-serif';
+  for(let i=1;i<=5;i++){
+    let gx = pad + (w-pad-20)*i/5;
+    ctx.beginPath(); ctx.moveTo(gx,10); ctx.lineTo(gx,h-pad); ctx.stroke();
+    let gy = h-pad - (h-pad-20)*i/5;
+    ctx.beginPath(); ctx.moveTo(pad,gy); ctx.lineTo(w-20,gy); ctx.stroke();
+  }
+  ctx.strokeStyle = '#16324A';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(pad,10); ctx.lineTo(pad,h-pad); ctx.lineTo(w-20,h-pad); ctx.stroke();
+  ctx.textAlign = 'center';
+  ctx.fillText(xLabel+'  (0 - '+Math.round(xMax)+'s)', w/2, h-8);
+  ctx.save();
+  ctx.translate(24,h/2+40);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText(yLabel,0,0);
+  ctx.restore();
+}
+function toXY(t,v,w,h,pad,xMax,yMax){
+  const x = pad + (t/xMax)*(w-pad-20);
+  const y = (h-pad) - (v/yMax)*(h-pad-20);
+  return [x,y];
+}
+function plotCurve(ctx,points,w,h,pad,xMax,yMax,color,lineWidth){
+  ctx.strokeStyle = color; ctx.lineWidth = lineWidth||2.5; ctx.beginPath();
+  points.forEach((p,i)=>{
+    const [x,y]=toXY(p[0],p[1],w,h,pad,xMax,yMax);
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+}
+function tempFactor(T){ return Math.pow(2,(T-25)/10); }
+
+/* ---------- curve sampling & autoscaling ---------- */
+function sampleCurve(Vmax,k,tEnd,steps){
+  const pts=[];
+  for(let i=0;i<=steps;i++){
+    const t = tEnd*i/steps;
+    pts.push([t, Vmax*(1-Math.exp(-k*t))]);
+  }
+  return pts;
+}
+function computeT99(k){ return 4.6/Math.max(k,0.0005); } // time to reach ~99% of Vmax
+function niceCeil(x){
+  if(x<=20) return Math.ceil(x/5)*5;
+  if(x<=200) return Math.ceil(x/20)*20;
+  return Math.ceil(x/100)*100;
+}
+
+/* ---------- lump graphics ---------- */
+function addEllipse(g,cx,cy,rx,ry){
+  const e = document.createElementNS(SVGNS,'ellipse');
+  e.setAttribute('cx',cx); e.setAttribute('cy',cy);
+  e.setAttribute('rx',rx); e.setAttribute('ry',ry);
+  e.setAttribute('fill','#c9c2b0'); e.setAttribute('stroke','#a89f8a'); e.setAttribute('stroke-width','1');
+  g.appendChild(e);
+}
+function addDot(g,cx,cy,r){
+  const c = document.createElementNS(SVGNS,'circle');
+  c.setAttribute('cx',cx); c.setAttribute('cy',cy); c.setAttribute('r',r);
+  c.setAttribute('fill','#a89f8a');
+  g.appendChild(c);
+}
+function rand(a,b){ return a+Math.random()*(b-a); }
+function renderLumps(g, type, n){
+  g.innerHTML = '';
+  if(type==='large'){
+    const count = n || (1+Math.round(Math.random()));
+    for(let i=0;i<count;i++) addEllipse(g, rand(35,105), rand(103,127), rand(15,20), rand(10,14));
+  } else if(type==='small'){
+    const count = n || (8+Math.round(Math.random()*4));
+    for(let i=0;i<count;i++) addEllipse(g, rand(22,118), rand(95,130), rand(4,6), rand(3,5));
+  } else {
+    const count = n || 30;
+    for(let i=0;i<count;i++) addDot(g, rand(19,121), rand(88,132), rand(1,1.8));
+  }
+}
+
+/* ---------- shared syringe/apparatus + autoscaled animation ---------- */
+function runApparatus(opts){
+  // opts: { Vmax, k, molesSolidInitial, curveStore, keepCheckboxEl, drawFn, syringeFillEl, plungerEl, bubbleGroupEl, lumpsGroupEl, volReadoutEl, onDone }
+  const t99 = computeT99(opts.k);
+  let maxT99 = t99;
+  opts.curveStore.forEach(c=>{ maxT99 = Math.max(maxT99, computeT99(c.k)); });
+  const xMax = niceCeil(maxT99);
+  const duration = 2400;
+  const start = performance.now();
+
+  function frame(now){
+    let prog = Math.min(1, (now-start)/duration);
+    const elapsedT = prog*xMax;
+    const livePoints = sampleCurve(opts.Vmax, opts.k, elapsedT, 70);
+    opts.drawFn(livePoints, xMax);
+
+    const V = opts.Vmax*(1-Math.exp(-opts.k*elapsedT));
+    const frac = Math.min(1, V/SYRINGE_CAPACITY);
+    opts.syringeFillEl.setAttribute('width', frac*BARREL_LEN);
+    opts.plungerEl.setAttribute('x', BARREL_START + frac*BARREL_LEN - 2);
+    opts.volReadoutEl.textContent = V.toFixed(1);
+
+    // fade the solid in proportion to how much has actually reacted
+    const fractionReacted = Math.min(1, V/(REAGENT_SCALE*opts.molesSolidInitial));
+    opts.lumpsGroupEl.setAttribute('opacity', (1-fractionReacted).toFixed(3));
+
+    let rate = opts.k*(opts.Vmax-V);
+    if(Math.random() < Math.min(0.9, rate/10)){
+      const b = document.createElementNS(SVGNS,'circle');
+      b.setAttribute('cx', 25+Math.random()*75);
+      b.setAttribute('cy', 130);
+      b.setAttribute('r', 2+Math.random()*2);
+      b.setAttribute('fill', '#ffffff');
+      b.setAttribute('opacity','0.8');
+      opts.bubbleGroupEl.appendChild(b);
+      let by = 130;
+      const rise = setInterval(()=>{
+        by -= 4;
+        b.setAttribute('cy', by);
+        if(by < 40){ clearInterval(rise); b.remove(); }
+      }, 40);
+    }
+
+    if(prog < 1){ requestAnimationFrame(frame); }
+    else {
+      if(opts.keepCheckboxEl.checked){ opts.curveStore.push({Vmax:opts.Vmax,k:opts.k}); }
+      else { opts.curveStore.length = 0; }
+      if(opts.onDone) opts.onDone();
+    }
+  }
+  requestAnimationFrame(frame);
+}
+
+/* ================= TAB 1: CONSTANT MASS ================= */
+const MC_MASS_G = 1.0;
+const REAGENT_SCALE = 3000; // cm3 of gas per mole of CO2 (illustrative, not real molar volume)
+const MC_VMAX = (MC_MASS_G/100)*REAGENT_SCALE; // marble always fully reacts: acid assumed in excess
+
+const mcConc = document.getElementById('mc-conc');
+const mcTemp = document.getElementById('mc-temp');
+const mcConcVal = document.getElementById('mc-conc-val');
+const mcTempVal = document.getElementById('mc-temp-val');
+const mcSurfaceButtons = document.querySelectorAll('#mc-surface button');
+const mcLumps = document.getElementById('mc-lumps');
+let mcSurface = 'small';
+mcSurfaceButtons.forEach(b=>b.addEventListener('click', ()=>{
+  mcSurfaceButtons.forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  mcSurface = b.dataset.val;
+  renderLumps(mcLumps, mcSurface);
+  mcLumps.setAttribute('opacity','1');
+}));
+mcConc.addEventListener('input', ()=> mcConcVal.textContent = parseFloat(mcConc.value).toFixed(1)+' mol/dm³');
+mcTemp.addEventListener('input', ()=> mcTempVal.textContent = mcTemp.value+' °C');
+renderLumps(mcLumps, mcSurface);
+
+const mcCanvas = document.getElementById('mc-graph');
+const mcCtx = mcCanvas.getContext('2d');
+const MC_W = mcCanvas.width, MC_H = mcCanvas.height, MC_PAD=56, MC_YMAX=40;
+let mcPreviousCurves = [];
+function mcSurfaceFactor(s){ return s==='powder'?9:s==='small'?3:1; }
+function redrawMarbleGraph(liveCurve, xMax){
+  xMax = xMax || 60;
+  drawAxes(mcCtx,MC_W,MC_H,MC_PAD,'Time (s)','Volume of gas (cm³)',xMax,MC_YMAX);
+  mcPreviousCurves.forEach(c=>{
+    const pts = sampleCurve(c.Vmax,c.k,xMax,60);
+    plotCurve(mcCtx,pts,MC_W,MC_H,MC_PAD,xMax,MC_YMAX,'#B9B2A0',2);
+  });
+  if(liveCurve) plotCurve(mcCtx,liveCurve,MC_W,MC_H,MC_PAD,xMax,MC_YMAX,'#2E8F8A',3);
+}
+redrawMarbleGraph();
+
+const mcBubbleGroup = document.getElementById('mc-bubbles');
+const mcSyringeFill = document.getElementById('mc-syringe-fill');
+const mcPlunger = document.getElementById('mc-plunger');
+const mcVolReadout = document.getElementById('mc-vol-readout');
+const mcKeepEl = document.getElementById('mc-keep');
+
+document.getElementById('mc-run').addEventListener('click', ()=>{
+  const conc = parseFloat(mcConc.value);
+  const T = parseFloat(mcTemp.value);
+  const k0 = 0.02;
+  const k = k0 * tempFactor(T) * mcSurfaceFactor(mcSurface) * Math.sqrt(conc);
+  mcBubbleGroup.innerHTML='';
+  renderLumps(mcLumps, mcSurface);
+  mcLumps.setAttribute('opacity','1');
+
+  runApparatus({
+    Vmax: MC_VMAX, k, molesSolidInitial: MC_MASS_G/100,
+    curveStore: mcPreviousCurves, keepCheckboxEl: mcKeepEl,
+    syringeFillEl: mcSyringeFill, plungerEl: mcPlunger,
+    bubbleGroupEl: mcBubbleGroup, lumpsGroupEl: mcLumps, volReadoutEl: mcVolReadout,
+    drawFn: (pts, xMax)=> redrawMarbleGraph(pts, xMax)
+  });
+});
+
+document.getElementById('mc-clear').addEventListener('click', ()=>{
+  mcPreviousCurves = [];
+  redrawMarbleGraph();
+  mcVolReadout.textContent = '0';
+  mcSyringeFill.setAttribute('width',0);
+  mcPlunger.setAttribute('x', BARREL_START-2);
+  renderLumps(mcLumps, mcSurface);
+  mcLumps.setAttribute('opacity','1');
+});
+
+/* ================= TAB 2: VARIABLE MASS ================= */
+const vmConc = document.getElementById('vm-conc');
+const vmTemp = document.getElementById('vm-temp');
+const vmConcVal = document.getElementById('vm-conc-val');
+const vmTempVal = document.getElementById('vm-temp-val');
+const vmMassButtons = document.querySelectorAll('#vm-mass button');
+const vmSurfaceButtons = document.querySelectorAll('#vm-surface button');
+const vmLumps = document.getElementById('vm-lumps');
+let vmMass = 2;
+let vmSurface = 'small';
+
+const VM_LUMP_COUNT = {
+  large: {1:1, 2:2, 4:4},
+  small: {1:8, 2:12, 4:20}
+};
+function refreshVmLumps(){
+  renderLumps(vmLumps, vmSurface, VM_LUMP_COUNT[vmSurface][vmMass]);
+}
+vmMassButtons.forEach(b=>b.addEventListener('click', ()=>{
+  vmMassButtons.forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  vmMass = parseFloat(b.dataset.val);
+  refreshVmLumps();
+  vmLumps.setAttribute('opacity','1');
+}));
+vmSurfaceButtons.forEach(b=>b.addEventListener('click', ()=>{
+  vmSurfaceButtons.forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  vmSurface = b.dataset.val;
+  refreshVmLumps();
+  vmLumps.setAttribute('opacity','1');
+}));
+vmConc.addEventListener('input', ()=> vmConcVal.textContent = parseFloat(vmConc.value).toFixed(1)+' mol/dm³');
+vmTemp.addEventListener('input', ()=> vmTempVal.textContent = vmTemp.value+' °C');
+refreshVmLumps();
+
+const vmCanvas = document.getElementById('vm-graph');
+const vmCtx = vmCanvas.getContext('2d');
+const VM_W = vmCanvas.width, VM_H = vmCanvas.height, VM_PAD=56, VM_YMAX=130;
+let vmPreviousCurves = [];
+function vmSurfaceFactor(s){ return s==='small'?4:1; }
+function redrawVmGraph(liveCurve, xMax){
+  xMax = xMax || 60;
+  drawAxes(vmCtx,VM_W,VM_H,VM_PAD,'Time (s)','Volume of gas (cm³)',xMax,VM_YMAX);
+  vmPreviousCurves.forEach(c=>{
+    const pts = sampleCurve(c.Vmax,c.k,xMax,60);
+    plotCurve(vmCtx,pts,VM_W,VM_H,VM_PAD,xMax,VM_YMAX,'#B9B2A0',2);
+  });
+  if(liveCurve) plotCurve(vmCtx,liveCurve,VM_W,VM_H,VM_PAD,xMax,VM_YMAX,'#2E8F8A',3);
+}
+redrawVmGraph();
+
+const vmBubbleGroup = document.getElementById('vm-bubbles');
+const vmSyringeFill = document.getElementById('vm-syringe-fill');
+const vmPlunger = document.getElementById('vm-plunger');
+const vmVolReadout = document.getElementById('vm-vol-readout');
+const vmLimitingReadout = document.getElementById('vm-limiting-readout');
+const vmKeepEl = document.getElementById('vm-keep');
+
+function computeVmChemistry(mass, conc){
+  const acidVolume = 0.05; // L, fixed
+  const molesHCl = conc*acidVolume;
+  const molesCaCO3 = mass/100;
+  const requiredHCl = 2*molesCaCO3;
+  const marbleLimited = requiredHCl <= molesHCl;
+  const molesCO2 = marbleLimited ? molesCaCO3 : molesHCl/2;
+  return { Vmax: molesCO2*REAGENT_SCALE, marbleLimited };
+}
+
+document.getElementById('vm-run').addEventListener('click', ()=>{
+  const conc = parseFloat(vmConc.value);
+  const T = parseFloat(vmTemp.value);
+  const { Vmax, marbleLimited } = computeVmChemistry(vmMass, conc);
+  const k0 = 0.02;
+  const k = k0 * tempFactor(T) * vmSurfaceFactor(vmSurface) * Math.sqrt(conc);
+  vmBubbleGroup.innerHTML='';
+  refreshVmLumps();
+  vmLumps.setAttribute('opacity','1');
+  vmLimitingReadout.textContent = 'Limiting reagent: ' + (marbleLimited ? 'marble (acid left over)' : 'acid (marble left over)');
+
+  runApparatus({
+    Vmax, k, molesSolidInitial: vmMass/100,
+    curveStore: vmPreviousCurves, keepCheckboxEl: vmKeepEl,
+    syringeFillEl: vmSyringeFill, plungerEl: vmPlunger,
+    bubbleGroupEl: vmBubbleGroup, lumpsGroupEl: vmLumps, volReadoutEl: vmVolReadout,
+    drawFn: (pts, xMax)=> redrawVmGraph(pts, xMax)
+  });
+});
+
+document.getElementById('vm-clear').addEventListener('click', ()=>{
+  vmPreviousCurves = [];
+  redrawVmGraph();
+  vmVolReadout.textContent = '0';
+  vmLimitingReadout.textContent = 'Limiting reagent: —';
+  refreshVmLumps();
+  vmLumps.setAttribute('opacity','1');
+  vmSyringeFill.setAttribute('width',0);
+  vmPlunger.setAttribute('x', BARREL_START-2);
+});
+</script>
+
+</body>
+</html>
